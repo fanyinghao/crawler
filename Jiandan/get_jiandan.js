@@ -6,22 +6,25 @@ function md5(str) {
     md5sum.update(str);
     str = md5sum.digest('hex');
     return str;
-};
+}
 
 function base64_decode(str) {
     return Buffer.from(str, 'base64').toString('ascii');
-};
+}
 
 function time() {
     var a = new Date().getTime();
     return parseInt(a / 1000)
 }
+
 function chr(a) {
     return String.fromCharCode(a)
 }
+
 function ord(a) {
     return a.charCodeAt()
 }
+
 var jd16K92Q8ZNbu6FA7LfBJwNJUpmKRm5NV7 = function(n, t, e) {
     var f = "DECODE";
     var t = t ? t : "";
@@ -77,7 +80,7 @@ var jd16K92Q8ZNbu6FA7LfBJwNJUpmKRm5NV7 = function(n, t, e) {
         u = base64_decode(d)
     }
     return u
-};
+}
 
 function getPictureUrl(e) {
     return jd16K92Q8ZNbu6FA7LfBJwNJUpmKRm5NV7(e, "oiXqcqIlsGXEYVyyW5zGMcwhqCxpHim5");
@@ -85,7 +88,7 @@ function getPictureUrl(e) {
 
 const baseUrl = "http://jandan.net/ooxx/"
 
-async function get_data(page) {
+function get_data(page) {
   return new Promise((resolve, reject) => {
     console.log(baseUrl+page)
 
@@ -98,7 +101,7 @@ async function get_data(page) {
   });
 }
 
-async function insert_items(records, success, error) {
+function insert_items(records, success, error) {
   
   console.log('saving', records)
   
