@@ -86,7 +86,7 @@ function getPictureUrl(e) {
     return jd16K92Q8ZNbu6FA7LfBJwNJUpmKRm5NV7(e, "oiXqcqIlsGXEYVyyW5zGMcwhqCxpHim5");
 }
 
-const baseUrl = "http://jandan.net/ooxx/"
+const baseUrl = "https://jandan.net/ooxx/"
 
 function get_data(page) {
   return new Promise((resolve, reject) => {
@@ -103,14 +103,58 @@ function get_data(page) {
 
 function insert_items(records, success, error) {
   
-  console.log('saving', records)
-  
   // storage pictures url to minapp.cloud
-  Sources.createMany(records).then(res => { success(res) }, err => { error(err) })
+  Sources.createMany(records).then(res => { success(res) }, err => { 
+    
+    if(err.message == "400: 当前字段存在唯一索引，无法创建重复数据") {
+      
+      
+      let query = new BaaS.Query()
+      
+      query.in('img', records.map((item) => {
+        return item.img
+      }))
+      
+      Sources.setQuery(query).limit(1000).find().then(res2 => {
+        // success
+        let exists = res2.data.objects.map((item) => {
+          return item.img
+        });
+        
+        console.log('exists', exists)
+        
+        let newRecords = records.filter((r) => {
+          return exists.indexOf(r.img) === -1;
+        })
+        
+        console.log('newRecords', newRecords)
+        
+        if(newRecords && newRecords.length > 0) {
+          console.log('records:', records.length)
+          console.log('newRecords:', newRecords.length)
+          
+          Sources.createMany(newRecords).then(res3 => { 
+            console.log('new success', res3)
+            success(res3) 
+            
+          }, err3 => { 
+            console.log('new err', err3)
+            // err
+            error(err3);
+          })
+        } else
+          success() 
+        
+      }, err2 => {
+        // err
+        error(err2);
+      })
+    }
+  })
 }
 
 function get_page(page, callback){
-  get_data("page-"+page).then(html => {
+  get_data(page > 0 ? ("page-"+page) : "").then(html => {
     var matches = html.data.match(/<span class="img-hash">([\s\S]*?$)/gm);
     console.log(matches.length + ' pics');
     
@@ -124,19 +168,26 @@ function get_page(page, callback){
     })
     
     insert_items(items, (ret) => {
-      callback(null, 'done: ' + ret)
+      var m = /page-([\d]+)#comments" class="previous-comment-page">下一页/g.exec(html.data);
+      if(m && m.length > 0) {
+        var next = m[1];
+        console.log('next page: ',next)
+        if(next > 0 && ret)
+          get_page(next, callback);
+      }
+      
+      callback(null, 'done: ' + (ret ? ret.data.succeed: 'all exists'))
     },(err) => {
       callback(null, err)
     })
     
   }, err => {
-    console.error(err)
-    callback(null, 'query error')
+    callback(err, 'query error')
   })
 }
 
 exports.main = function functionName(event, callback) {
     
-  get_page(event.data, callback);
+  get_page(10000, callback);
   
 }
